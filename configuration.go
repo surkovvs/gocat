@@ -1,10 +1,12 @@
-package shutdowner
+package ggwp
 
 import (
 	"context"
 	"os"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -12,27 +14,51 @@ var (
 	defaultTimeout time.Duration = time.Second * 3
 )
 
-type ShutDownerOpt func(*shutdown)
+type nullLog struct{}
 
-func WithLogger(logger Logger) ShutDownerOpt {
+func (nullLog) Info(msg string, args ...any) {
+}
+
+func (nullLog) Error(msg string, args ...any) {
+}
+
+type zapWrap struct {
+	z *zap.SugaredLogger
+}
+
+func (w zapWrap) Info(msg string, args ...any) {
+	w.z.Infow(msg, args...)
+}
+
+func (w zapWrap) Error(msg string, args ...any) {
+	w.z.Errorw(msg, args...)
+}
+
+func WithLogger(logger Logger) shutdownOpt {
 	return func(s *shutdown) {
 		s.logger = logger
 	}
 }
 
-func WithShutdownTimeout(dur time.Duration) ShutDownerOpt {
+func WithZapLogger(logger *zap.SugaredLogger) shutdownOpt {
+	return func(s *shutdown) {
+		s.logger = zapWrap{logger}
+	}
+}
+
+func WithShutdownTimeout(dur time.Duration) shutdownOpt {
 	return func(s *shutdown) {
 		s.timeout = dur
 	}
 }
 
-func WithStopContext(stopCtx context.Context) ShutDownerOpt {
+func WithStopContext(stopCtx context.Context) shutdownOpt {
 	return func(s *shutdown) {
 		s.stopCtx = stopCtx
 	}
 }
 
-func StopOnSigs(sigs ...os.Signal) ShutDownerOpt {
+func WithProvidedSigs(sigs ...os.Signal) shutdownOpt {
 	return func(s *shutdown) {
 		s.sigs = sigs
 	}

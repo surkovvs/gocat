@@ -1,4 +1,4 @@
-package shutdowner
+package ggwp
 
 var sdDefault *shutdown
 

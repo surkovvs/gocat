@@ -1,4 +1,4 @@
-package shutdowner
+package ggwp
 
 import (
 	"context"
@@ -17,6 +17,11 @@ type stop struct {
 	finished bool
 }
 
+type Logger interface {
+	Info(msg string, args ...any)
+	Error(msg string, args ...any)
+}
+
 type shutdown struct {
 	stops    []*stop
 	sigs     []os.Signal
@@ -28,7 +33,14 @@ type shutdown struct {
 	exitCode int
 }
 
-func NewShutdown(opts ...ShutDownerOpt) *shutdown {
+type shutdownOpt func(*shutdown)
+
+type namedError struct {
+	name string
+	err  error
+}
+
+func NewShutdown(opts ...shutdownOpt) *shutdown {
 	sd := &shutdown{
 		stops:    make([]*stop, 0),
 		sigs:     make([]os.Signal, 0),
@@ -54,7 +66,7 @@ func (sd *shutdown) init() {
 		case <-sd.stopCtx.Done():
 			sd.logger.Info("graceful shutdown started by stop context")
 		case sig := <-syscallC:
-			sd.logger.Info("graceful shutdown started by syscall", sig.String())
+			sd.logger.Info("graceful shutdown started by syscall", "syscall", sig.String())
 		case <-sd.stopC:
 			sd.logger.Info("graceful shutdown started by stop function")
 		}
@@ -76,7 +88,7 @@ func (sd *shutdown) RegisterNamedGracefulStop(name string, f func() error) {
 	})
 }
 
-func (sd *shutdown) GetStopFunc() func(exitCode int) {
+func (sd *shutdown) GetStopTrigger() func(exitCode int) {
 	return func(exitCode int) {
 		sd.exitCode = exitCode
 		close(sd.stopC)
@@ -87,17 +99,16 @@ func (sd *shutdown) GetStopFunc() func(exitCode int) {
 func (sd *shutdown) gracefulShutdown() {
 	wg := sync.WaitGroup{}
 	done := make(chan struct{})
-	errChan := make(chan error, 1)
+	errChan := make(chan namedError, 1)
 	ctx, cancel := context.WithTimeout(context.Background(), sd.timeout)
 	defer cancel()
 	for _, s := range sd.stops {
 		wg.Add(1)
 		go func(s *stop) {
 			if err := s.stopFunc(); err != nil {
-				if s.name != unnamed {
-					errChan <- fmt.Errorf(`for registered function "%s": %w`, s.name, err)
-				} else {
-					errChan <- err
+				errChan <- namedError{
+					name: s.name,
+					err:  err,
 				}
 			}
 			s.finished = true
@@ -111,9 +122,13 @@ func (sd *shutdown) gracefulShutdown() {
 	}()
 
 	go func() {
-		for err := range errChan {
-			if err != nil {
-				sd.logger.Error("graceful stop error", err)
+		for namedErr := range errChan {
+			if namedErr.err != nil {
+				errKey := `error from unnamed stop func`
+				if namedErr.name != unnamed {
+					errKey = fmt.Sprintf(`error from stop func "%s"`, namedErr.name)
+				}
+				sd.logger.Error("graceful stop", errKey, namedErr.err)
 			}
 		}
 
@@ -122,7 +137,7 @@ func (sd *shutdown) gracefulShutdown() {
 
 	select {
 	case <-done:
-		sd.logger.Info("gracedul shutdown finished for all registered functions")
+		sd.logger.Info(`gracedul shutdown finished for all registered functions`, `functions count`, len(sd.stops))
 	case <-ctx.Done():
 		namesOfUnfinished := make([]string, 0, len(sd.stops))
 		for _, stop := range sd.stops {
@@ -130,7 +145,7 @@ func (sd *shutdown) gracefulShutdown() {
 				namesOfUnfinished = append(namesOfUnfinished, stop.name)
 			}
 		}
-		sd.logger.Error("gracedul shutdown timeout exeeded, unfinished functions:", namesOfUnfinished)
+		sd.logger.Error(`gracedul shutdown timeout exeeded`, `unfinished functions`, namesOfUnfinished)
 	}
 	os.Exit(sd.exitCode)
 }
