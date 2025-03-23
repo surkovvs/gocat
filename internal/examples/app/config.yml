@@ -1,0 +1,11 @@
+Logger: 
+  Level: 'debug'
+  ConsoleEncoder: true
+Database:
+  URL:
+  Host: '127.0.0.1'
+  Port: 5432
+  DBName: 'postgres'
+  User: 'postgres'
+  Pass: 'postgres'
+

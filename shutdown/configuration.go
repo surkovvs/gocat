@@ -1,4 +1,4 @@
-package ggwp
+package shutdown
 
 import (
 	"context"
@@ -35,36 +35,42 @@ func (w zapWrap) Error(msg string, args ...any) {
 }
 
 func WithLogger(logger Logger) shutdownOpt {
-	return func(s *shutdown) {
+	return func(s *sdManager) {
 		s.logger = logger
 	}
 }
 
 func WithZapLogger(logger *zap.SugaredLogger) shutdownOpt {
-	return func(s *shutdown) {
+	return func(s *sdManager) {
 		s.logger = zapWrap{logger}
 	}
 }
 
 func WithShutdownTimeout(dur time.Duration) shutdownOpt {
-	return func(s *shutdown) {
+	return func(s *sdManager) {
 		s.timeout = dur
 	}
 }
 
+func WithTriggerContext(triggerCtx context.Context) shutdownOpt {
+	return func(s *sdManager) {
+		s.triggerCtx = triggerCtx
+	}
+}
+
 func WithStopContext(stopCtx context.Context) shutdownOpt {
-	return func(s *shutdown) {
+	return func(s *sdManager) {
 		s.stopCtx = stopCtx
 	}
 }
 
 func WithProvidedSigs(sigs ...os.Signal) shutdownOpt {
-	return func(s *shutdown) {
+	return func(s *sdManager) {
 		s.sigs = sigs
 	}
 }
 
-func (sd *shutdown) defaultSettingsCheckAndApply() {
+func (sd *sdManager) defaultSettingsCheckAndApply() {
 	if sd.logger == nil {
 		sd.logger = nullLog{}
 	}
@@ -75,6 +81,10 @@ func (sd *shutdown) defaultSettingsCheckAndApply() {
 
 	if len(sd.sigs) == 0 {
 		sd.sigs = defaultSDSigs
+	}
+
+	if sd.triggerCtx == nil {
+		sd.triggerCtx = context.Background()
 	}
 
 	if sd.stopCtx == nil {

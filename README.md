@@ -1,1 +1,1 @@
-# shutdowner
+# Simple golang application tools
