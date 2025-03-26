@@ -15,9 +15,9 @@ type Pool struct {
 	*pgxpool.Pool
 }
 
-func (pool *Pool) New(cfg catcfg.Config) (*Pool, error) {
+func New(cfg catcfg.Config) (*Pool, error) {
 	cfgPool, err := pgxpool.ParseConfig(cfg.GetDSN())
-	if cfg.Logger != nil {
+	if err != nil {
 		return nil, fmt.Errorf("pool parse config: %w", err)
 	}
 
