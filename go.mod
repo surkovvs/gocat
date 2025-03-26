@@ -9,7 +9,6 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.34.0
-	github.com/samber/lo v1.49.1
 	github.com/simukti/sqldb-logger v0.0.0-20230108155151-646c1a075551
 	github.com/spf13/viper v1.20.0
 	go.uber.org/zap v1.27.0

@@ -1,5 +1,5 @@
 Logger: 
-  Level: 'debug'
+  Level: 2
   ConsoleEncoder: true
 Database:
   URL:
@@ -11,7 +11,7 @@ Database:
   LogQueries: true
   Pool:
     LogConnectOperations: true
-    # MaxConnLifetime:
+    MaxConnLifetime: 100ms
     # MaxConnLifetimeJitter:
     # MaxConnIdleTime:
     # MaxConns:
