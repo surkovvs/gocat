@@ -7,7 +7,7 @@ import (
 
 	"github.com/surkovvs/gocat/catapp"
 	"github.com/surkovvs/gocat/catcfg"
-	catdefzap "github.com/surkovvs/gocat/catdef/catdef_zap"
+	catdefzap "github.com/surkovvs/gocat/catdef/loggers/catdef_zap"
 	"github.com/surkovvs/gocat/catlog"
 )
 
@@ -109,18 +109,3 @@ func main() {
 
 	app.Start(context.Background())
 }
-
-// func Grpc() {
-// 	// Init
-// 	listener, _ := net.Listen("tcp", "127.0.0.1")
-// 	server := grpc.NewServer()
-// 	server.RegisterService()
-
-// 	// Run
-// 	server.Serve(listener)
-
-// 	// Shutdown
-// 	server.GracefulStop()
-
-// 	server.GetServiceInfo()[""]
-// }

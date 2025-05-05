@@ -21,6 +21,7 @@ var (
 
 type (
 	execution struct {
+		done          chan struct{}
 		errFlow       chan error
 		initRunCancel context.CancelFunc
 		initTimeout   *time.Duration
@@ -44,6 +45,7 @@ type (
 func New(opts ...appOption) *app {
 	a := &app{
 		execution: execution{
+			done:          make(chan struct{}),
 			errFlow:       make(chan error),
 			initRunCancel: nil,
 			initTimeout:   nil,
@@ -98,6 +100,12 @@ func (a *app) accompaniment() {
 			a.logger.Error(`module error`,
 				"application", a.name,
 				`error`, err)
+		case <-a.execution.done:
+			a.logger.Debug(`execution finished graceful shutdown started`,
+				"application", a.name)
+			signal.Stop(syscallC)
+			a.execution.initRunCancel()
+			go a.gracefulShutdown()
 		case sig := <-syscallC:
 			a.logger.Info(`graceful shutdown started by syscall`,
 				"application", a.name,

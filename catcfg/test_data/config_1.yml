@@ -17,4 +17,20 @@ Database:
     # MaxConns:
     # MinConns:
     # HealthCheckPeriod:
-
+Kafka:
+  consumer:
+    topic: 'my_topic'
+    debug: 'consumer,topic' # 'all'
+    bootstrap.servers: '127.0.0.1:9092,127.0.0.1:9093'
+    group.id: 'myGroup'
+    auto.offset.reset: 'earliest'
+    enable.auto.commit: false
+    session.timeout.ms: 1000
+    security.protocol: 'plaintext'
+  produser:
+    bootstrap.servers: '127.0.0.1:9091'
+    group.id: 'myGroup2'
+    auto.offset.reset: 'latest'
+    enable.auto.commit: true
+    session.timeout.ms: 500
+    security.protocol: 'plaintext'

@@ -30,7 +30,7 @@ func (a *app) Start(ctx context.Context) {
 	group, err := a.storage.GetGroupByName(privelegedGroupName)
 	if err != nil {
 		if errors.Is(err, compstor.ErrGroupNotFound) {
-			a.logger.Error(`priveleged group not found`,
+			a.logger.Info(`priveleged group not found`,
 				"application", a.name)
 		} else {
 			a.logger.Error(`unexpected error`,
@@ -40,8 +40,8 @@ func (a *app) Start(ctx context.Context) {
 		}
 	} else {
 		a.processInitializers(initCtx, group)
-		a.processRunners(ctx, group)
-		a.processShutdowners(ctx, group)
+		a.processRunners(initCtx, group)
+		a.processShutdowners(initCtx, group)
 	}
 
 	wg := sync.WaitGroup{}
@@ -59,11 +59,8 @@ func (a *app) Start(ctx context.Context) {
 
 	wg.Wait()
 
-	for _, module := range a.storage.GetUnsortedShutdowners() {
-		if module.Shutdowner().IsReady() || module.Shutdowner().IsInProcess() {
-			<-a.shutdown.shutdownDone
-		}
-	}
+	close(a.execution.done)
+	<-a.shutdown.shutdownDone
 }
 
 func (a *app) processInitializers(ctx context.Context, group compstor.SequentialGroup) {

@@ -17,4 +17,43 @@ Database:
     # MaxConns:
     # MinConns:
     # HealthCheckPeriod:
+Kafka:
+  produser:
+    topic: 'my_topic' # (custom)
+    bootstrap.servers: '127.0.0.1:9092'
+    client.id: 'my_producer'
+    security.protocol: 'plaintext'
+    acks: '0' # 0=Broker does not send any response/ack to client, -1 or all=Broker will block until message is committed by all in sync replicas (ISRs)
+    enable.idempotence: false
+    compression.type: 'lz4' # none, gzip, snappy, lz4, zstd
+    flush.timeout.ms: 5 # (custom) таймаут на слив
+    linger.ms: 0  # Задержка перед отправкой сообщений
+    batch.size: 16384  # Размер пакета сообщений
+    message.max.bytes: 1000000 
+    queue.buffering.max.messages: 20 # максимальное кол-во сообщений в очереди на отправку 
+    retries: 5 # How many times to retry sending a failing Message
+    go.logs.channel.enable: true # log or not
+    debug: 'queue' # generic, broker, topic, metadata, feature, queue, msg, protocol, cgrp, security, fetch, interceptor, plugin, consumer, admin, eos, mock, assignor, conf, telemetry, all
+    log_level: 7 # Logging level (syslog(3) levels), 0-7, 7 - by default
+    # log.queue: true # Disable spontaneous log_cb from internal librdkafka threads
+    # log.thread.name: true # Print internal thread name in log messages 
+    # log.connection.close: true # Log broker disconnects
+  consumer:
+    topic: 'zc-general-price'
+    go.logs.channel.enable: true # log with logger or not
+    # go.application.rebalance.enable: false
+    debug: 'queue' # generic, broker, topic, metadata, feature, queue, msg, protocol, cgrp, security, fetch, interceptor, plugin, consumer, admin, eos, mock, assignor, conf, telemetry, all
+    log_level: 7 # Logging level (syslog(3) levels), 0-7, 7 - by default
+    # enable.partition.eof: false
+    bootstrap.servers: '127.0.0.1:9092,127.0.0.1:9093'
+    group.id: 'myGroup'
+    auto.offset.reset: 'beginning' # smallest, earliest, beginning, largest, latest, end, error
+    # partition.assignment.strategy: 'range' # range,roundrobin
+    enable.auto.commit: false
+    # auto.commit.interval.ms: 5000
+    enable.auto.offset.store: false # Automatically store offset of last message provided to application. 
+    session.timeout.ms: 1000
+    security.protocol: 'plaintext'
+    # isolation.level: 'read_uncommitted' # read_uncommitted, read_committed
+    queued.min.messages: 100
 
