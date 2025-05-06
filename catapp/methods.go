@@ -27,7 +27,7 @@ func (a *app) Start(ctx context.Context) {
 		initCtx = initRunCtx
 	}
 
-	group, err := a.storage.GetGroupByName(privelegedGroupName)
+	group, err := a.storage.GetGroupByName(PrivelegedGroup)
 	if err != nil {
 		if errors.Is(err, compstor.ErrGroupNotFound) {
 			a.logger.Info(`priveleged group not found`,

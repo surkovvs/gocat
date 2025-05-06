@@ -16,7 +16,7 @@ import (
 var (
 	defaultProvidedSigs    = []os.Signal{syscall.SIGTERM, syscall.SIGINT}
 	defaultShutdownTimeout = time.Second * 3
-	privelegedGroupName    = `global`
+	PrivelegedGroup        = `global`
 )
 
 type (
@@ -69,7 +69,7 @@ func New(opts ...appOption) *app {
 	a.defaultSettingsCheckAndApply()
 	go a.accompaniment()
 
-	if err := a.storage.AddGroup(privelegedGroupName); err != nil && !errors.Is(err, compstor.ErrGroupAlreadyRegistered) {
+	if err := a.storage.AddGroup(PrivelegedGroup); err != nil && !errors.Is(err, compstor.ErrGroupAlreadyRegistered) {
 		log.Fatal(err)
 	}
 
@@ -101,6 +101,7 @@ func (a *app) accompaniment() {
 				"application", a.name,
 				`error`, err)
 		case <-a.execution.done:
+			a.execution.done = nil
 			a.logger.Debug(`execution finished graceful shutdown started`,
 				"application", a.name)
 			signal.Stop(syscallC)
